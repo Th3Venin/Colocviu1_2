@@ -4,8 +4,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -37,6 +41,16 @@ public class Colocviu1_2MainActivity extends AppCompatActivity {
         return false;
     }
 
+    private class MessageBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("ro.pub.cs.systems.eim.practicaltest01.broadcastreceiverextra", intent.getStringExtra("ro.pub.cs.systems.eim.practicaltest01.broadcastreceiverextra"));
+        }
+    }
+
+    private MessageBroadcastReceiver messageBroadcastReceiver = new MessageBroadcastReceiver();
+    private IntentFilter intentFilter = new IntentFilter();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,6 +69,7 @@ public class Colocviu1_2MainActivity extends AppCompatActivity {
                     if (input.length() > 0 && isNumeric(input)) {
                         sumView.setText(input);
                         sum += Integer.parseInt(input);
+                        startPracticalService();
                     }
                 }
                 else {
@@ -62,6 +77,7 @@ public class Colocviu1_2MainActivity extends AppCompatActivity {
                         String output = sumView.getText().toString() + " + " + input;
                         sumView.setText(output);
                         sum += Integer.parseInt(input);
+                        startPracticalService();
                     }
                 }
             }
@@ -110,5 +126,34 @@ public class Colocviu1_2MainActivity extends AppCompatActivity {
 
         sum = savedInstanceState.getInt("sum");
         sumView.setText(savedInstanceState.getString("sumString"));
+    }
+
+    private void startPracticalService() {
+        if (sum > 10) {
+            Intent intent = new Intent(getApplicationContext(), Colocviu1_2Service.class);
+            intent.putExtra("sum", sum);
+            getApplicationContext().startService(intent);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Intent intent = new Intent(getApplicationContext(), Colocviu1_2Service.class);
+        getApplicationContext().stopService(intent);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(messageBroadcastReceiver, intentFilter);
+        Toast.makeText(Colocviu1_2MainActivity.this, Integer.toString(sum), Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(messageBroadcastReceiver);
+        Toast.makeText(Colocviu1_2MainActivity.this, Integer.toString(sum), Toast.LENGTH_LONG).show();
     }
 }
